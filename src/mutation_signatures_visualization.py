@@ -49,7 +49,7 @@ GREY = (203./255, 203./255, 203./255)
 ################################################################################
 def sbs_signature_plot(data, fig=None, sharex=False, sharey='row',
                        xlabel='Trinucleotide sequence motifs',
-                       ylabel='Probability', row_labels=True,
+                       ylabel='Count', row_labels=True,
                        title=None,
                        palette=COSMIC, fontsize=8, **kwargs):
     # Set up parameters
@@ -74,6 +74,7 @@ def sbs_signature_plot(data, fig=None, sharex=False, sharey='row',
     # Plot the number/probability of mutations per each substitution type
     fig = plt.figure(figsize=(15, K*3.1))
     gs = gridspec.GridSpec(row_mult*K, N_SUBS, height_ratios=height_ratios)
+
     for i in range(K):
         #  Add row labels (if necessary)
         if row_labels:
@@ -93,6 +94,7 @@ def sbs_signature_plot(data, fig=None, sharex=False, sharey='row',
                 cax.add_artist(at)
 
         # Plot distributiton per substitution type
+        ax_ls = [0]*6
         for j, sub in enumerate(SUBS):
             # Get the list of active categories
             sub_cats = [ c for c in categories if sub in c ]
@@ -102,31 +104,40 @@ def sbs_signature_plot(data, fig=None, sharex=False, sharey='row',
             # Compute the number of mutations across this substitution category
             x = np.arange(len(sub_cats))
             y = data.values[i, sub_cat_idx]
-
             # Plot
+            #first_ax = plt.subplot(gs[2*i+1, 0])
+            #first_ax = plt.subplot(gs[2*i+1, j])
+            """
             if (sharey == 'row' and j == 0) or (sharey and j == 0 and i == 0):
-                first_ax = ax = plt.subplot(gs[2*i+1, j])
-            else:
-                ax = plt.subplot(gs[2*i+1, j], sharey=first_ax)
-
-            ax.bar(x, y, align='center', color=STYLES[palette][SUB_COLOR][sub])
-            ax.set_title(sub)
+                ax_ls[j] = plt.subplot(gs[2*i+1, j])
+                first_ax = plt.subplot(gs[2*i+1, 0])
+            """
+            
+            if sharey:
+                if j == 0:
+                    first_ax = plt.subplot(gs[2*i+1, j]) 
+                    ax_ls[j] = plt.subplot(gs[2*i+1, j]) 
+                else:
+                    ax_ls[j] = plt.subplot(gs[2*i+1, j], sharey=first_ax)
+            print(ax_ls)
+            ax_ls[j].bar(x, y, align='center', color=STYLES[palette][SUB_COLOR][sub])
+            ax_ls[j].set_title(sub)
 
             # Only show at most 16 xticklabels
             if len(sub_cats) > 16:
                 offset = int(round(len(sub_cats)/16))
-                ax.grid(False)
-                ax.set_xticks(x[::offset])
-                ax.set_xticklabels(xticklabels[::offset], rotation='vertical', fontsize=fontsize)
+                ax_ls[j].grid(False)
+                ax_ls[j].set_xticks(x[::offset])
+                ax_ls[j].set_xticklabels(xticklabels[::offset], rotation='vertical', fontsize=fontsize)
             else:
-                ax.set_xticks(x)
-                ax.set_xticklabels(xticklabels, rotation='vertical', fontsize=fontsize)
+                ax_ls[j].set_xticks(x)
+                ax_ls[j].set_xticklabels(xticklabels, rotation='vertical', fontsize=fontsize)
 
             #  Add axis labels and ticks (sharing as necessary)
             if i == K-1:
-                ax.set_xlabel(xlabel)
+                ax_ls[j].set_xlabel(xlabel)
 
             if j == 0:
-                ax.set_ylabel(ylabel)
+                ax_ls[j].set_ylabel(ylabel)
             elif sharey == 'row' or sharey:
-                plt.setp(ax.get_yticklabels(), visible=False)
+                plt.setp(ax_ls[j].get_yticklabels(), visible=False)
